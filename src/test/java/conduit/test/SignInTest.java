@@ -64,28 +64,78 @@ public class SignInTest extends BaseTest {
 
     @Test
     public void shouldNotLoginWithoutData() {
+        driver.get(baseUrl);
+        driver.findElement(signInPage.BUTTON_SUBMIT).click();
 
+        basePage.checkErrorMessage(
+                signUpPage.MESSAGE_BLANK_VALUE,
+                wait,
+                driver,
+                "email",
+                "can't be blank"
+        );
     }
 
     @Test
     public void shouldNotLoginWithoutLogin() {
+        driver.get(baseUrl);
+        driver.findElement(signInPage.INPUT_PASSWORD).sendKeys("11111111");
+        driver.findElement(signInPage.BUTTON_SUBMIT).click();
 
+        basePage.checkErrorMessage(
+                signUpPage.MESSAGE_BLANK_VALUE,
+                wait,
+                driver,
+                "email",
+                "can't be blank"
+        );
     }
 
     @Test
     public void shouldNotLoginWithoutPassword() {
+        driver.get(baseUrl);
+        driver.findElement(signInPage.INPUT_EMAIL).sendKeys("noemail@here.com");
+        driver.findElement(signInPage.BUTTON_SUBMIT).click();
 
+        basePage.checkErrorMessage(
+                signUpPage.MESSAGE_BLANK_VALUE,
+                wait,
+                driver,
+                "password",
+                "can't be blank"
+        );
     }
 
-    @Test
-    public void shouldShowValidationErrorIfEmailIsInvalid() {
+    @ParameterizedTest
+    @MethodSource("userLogin")
+    public void shouldShowValidationErrorIfEmailIsInvalid(String email, String password) {
+        driver.get(baseUrl);
 
+        driver.findElement(signInPage.INPUT_EMAIL)
+                .sendKeys(email);
+        driver.findElement(signInPage.INPUT_PASSWORD).sendKeys(password);
+        driver.findElement(signInPage.BUTTON_SUBMIT).click();
+
+        assertThat(driver.findElement(By.cssSelector("input:invalid")).isDisplayed()).isTrue();
     }
 
     static Stream<Arguments> userData() {
         return Stream.of(
                 Arguments.of(faker.internet().emailAddress() + new Date().getTime(), "11111111"),
                 Arguments.of("noemail@here.com" + new Date().getTime(), faker.internet().password())
+        );
+    }
+
+    static Stream<Arguments> userLogin() {
+        return Stream.of(
+                Arguments.of("aaa", "11111111"),
+                Arguments.of("aaa@", "11111111"),
+                Arguments.of("aaa@aaa,aa", "11111111"),
+                Arguments.of("aaa@aaa.", "11111111"),
+                Arguments.of("aaa@.aa", "11111111"),
+                Arguments.of("aaa@.", "11111111"),
+                Arguments.of("@.", "11111111"),
+                Arguments.of("@aaa.aa", "11111111")
         );
     }
 }
